@@ -1,0 +1,18 @@
+Package: StatComp21004
+Type: Package
+Title: Self-derived functions for 'Statistical Computing' course
+Version: 1.0
+Date: 2021-12-21
+Author: Tan Zheng
+Maintainer: Tan Zheng <tangle@mail.ustc.edu.cn>
+Description: Several R and Rcpp function are included in this package for illustration.
+License: GPL (>= 2)
+Imports: Rcpp, microbenchmark, knitr, rmarkdown, Rsymphony, linprog, Ball, MASS, RANN, boot, bootstrap, energy
+LinkingTo: Rcpp
+RoxygenNote: 7.1.2
+Encoding: UTF-8
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
+URL: http://github.com/TZombie/StatComp21004
+BugReports: http://github.com/TZombie/StatComp21004/issues
+

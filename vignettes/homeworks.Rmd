@@ -1,0 +1,1136 @@
+---
+title: "Homeworks"
+author: "Tan Zheng"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Homeworks}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## HW of 2021—09—16
+
+**text**:
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna.
+
+Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus.
+Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci.
+
+Aenean nec lorem. In porttitor. Donec laoreet nonummy augue.
+Suspendisse dui purus, scelerisque at, vulputate vitae, pretium mattis, nunc. Mauris eget neque at sem venenatis eleifend. Ut nonummy.
+
+
+
+**figure**:
+
+```{r}
+#![plot](figure.png)
+```
+
+**table**:\
+
+| code | name      | score  |
+|------|-----------|--------|
+| 001  | Xiaoming  | 1      |
+| 002  | Xiaohong  | 2      |
+| 003  | Xiaolan   | 3      |
+
+## HW of 2021—09—30
+
+```{r}
+quantile_list <- c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
+m <- 10000
+for (i in quantile_list){
+  x <- runif(m, min=0, max=i)
+  theta.hat <- i*mean(x^(2)*(1-x)^(2)) / beta(3, 3)
+  cat("\n When quantile = ",i, ", the MC result is", theta.hat)
+  cat("\n the Theoretical result is", pbeta(i, 3, 3))
+}
+```
+
+```{r}
+sigma <- 0.5
+n <- 10000
+u <- runif(n)
+x <- sqrt(-2*sigma^2*log(1-u))
+y <- sqrt(-2*sigma^2*log(u))
+z <- (x+y)/2
+cat('\n Variance: ', var(z))
+u_base <- runif(n)
+z_base <- sqrt(-2*sigma^2*log(1-u_base))
+cat('\n Variance of baseline: ', var(z_base))
+```
+
+$$
+f_1(x) = 2xe^{(1-x^2)}(x \geq 1)\\
+f_2(x) = e^{1-x}(x \geq 1)
+$$
+
+Use MC method to difference the variance of two importance sampling:
+```{r}
+pdf_f0 <- function(u){
+  return (u^2/sqrt(2*pi)*exp(-u^2/2)) * (u > 1)
+}
+n <- 100000
+x <- runif(n) #using f1
+x <- sqrt(1-log(1-x))
+fg <- pdf_f0(x) / (2*x*exp(1-x^2))
+theta.hat[1] <- mean(fg)
+se <- c()
+se[1] <- var(fg)
+
+
+x <- runif(n) #using f2
+x <- 1-log(1-x)
+fg <- pdf_f0(x) / exp(1-x)
+theta.hat[2] <- mean(fg)
+se[2] <- var(fg)
+cat('\n The estimation results: ', theta.hat)
+cat('\n The estimation variance:', se)
+```
+
+It seems that $f_2$ creates less variance.
+
+## HW of 2021—10-14
+
+### 6.5
+
+```{r}
+set.seed(114514)
+n <- 20
+df_chisq <- 2
+N <- 1000
+alpha <- 0.05
+UCL <- replicate(N, expr = {
+x <- rchisq(n, df=df_chisq)
+sqrt(n) * (mean(x) - df_chisq) / sqrt(var(x))
+} )
+sum(abs(UCL) <= qt(1-alpha/2, df=n-1)) / N
+
+```
+
+We can see that the confidence probability is 93.4%.
+
+### 6.A
+
+```{r}
+n <- 1000
+alpha <- 0.05
+df_chisq <- 1
+unif_max <- 2
+unif_min <- 0
+rate_exp <- 1
+m <- 10000
+p_chisq <- numeric(m)
+p_unif <- numeric(m)
+p_exp <- numeric(m)
+for (j in 1:m) {
+  x_chisq <- rchisq(n, df=df_chisq)
+  x_unif <- runif(n, min=unif_min, max=unif_max)
+  x_exp <- rexp(n, rate=rate_exp)
+  # chisq distribution
+  ttest_chisq <- t.test(x_chisq, alternative = "two.sided", mu = df_chisq)
+  p_chisq[j] <- ttest_chisq$p.value
+  # unif distribution
+  ttest_unif <- t.test(x_unif, alternative = "two.sided", mu = (unif_min + unif_max) / 2)
+  p_unif[j] <- ttest_unif$p.value
+  # exp distribution
+  ttest_exp <- t.test(x_exp, alternative = "two.sided", mu = 1 / rate_exp)
+  p_exp[j] <- ttest_exp$p.value
+}
+p_chisq.hat <- mean(p_chisq < alpha)
+p_unif.hat <- mean(p_unif < alpha)
+p_exp.hat <- mean(p_exp < alpha)
+print(c(p_chisq.hat, p_unif.hat, p_exp.hat))
+```
+
+
+
+### The third question
+
+(1)
+$$
+H_0: |\pi_2(\theta)-\pi_1(\theta)| = 0\\
+H_1: |\pi_2(\theta)-\pi_1(\theta)| \neq 0
+$$
+
+(2)
+McNemar test. Since it is used to compare the marginal homogeneity of the distribution of two methods.
+
+(3)
+$$
+\chi^2 = \frac{(b-c)^2}{b+c}
+$$
+Where $b=|\{x_i:x_i \text{ negative in method 1 and positive in method 2}\}|$, $c=|\{x_i:x_i \text{ negative in method 2 and positive in method 1}\}|$
+
+
+## HW of 2021—10-21
+
+### 6.5
+
+Example 6.8
+
+```{r}
+set.seed(1234)
+sk <- function(x) { # input an n*d matrix
+  n <- nrow(x)
+  d <- ncol(x)
+  xbar <- colMeans(x)
+  res <- 0
+  cov_matrix <- cov(x) * (n-1) / n
+  inv_cov_matrix <- solve(cov_matrix)
+  for (i in 1:nrow(x)){
+    for (j in 1:nrow(x)){
+      temp_i <- array(x[i,]-xbar)
+      temp_j <- array(x[j,]-xbar)
+      res <- res + (t(temp_i) %*% inv_cov_matrix %*% temp_j)^3
+    }
+  }
+  res <- res / (n^2)
+  return(res*n/6)
+}
+```
+
+```{r}
+alpha <- 0.05
+d <- 2
+# lower the coeff
+n <- c(10, 20)
+cv.upper <- qchisq(1-alpha/2, df=d*(d+1)*(d+2)/6)
+cv.lower <- qchisq(alpha/2, df=d*(d+1)*(d+2)/6)
+# computes the sample Mardia multivariable skewness coeff.
+p.reject <- numeric(length(n)) 
+m <- 100
+library(MASS)
+for (i in 1:length(n)) {
+  sktests <- numeric(m) #test decisions
+  for (j in 1:m) {
+    x <- mvrnorm(n[i], rep(0, d), diag(1, nrow=d, ncol=d))
+    sktests[j] <- as.integer((sk(x) >= cv.upper) ||sk(x) <= cv.lower)
+  }
+  p.reject[i] <- mean(sktests) #proportion rejected
+}
+p.reject
+
+```
+
+Example 6.10 
+
+
+```{r}
+# lower the coeff
+alpha <- 0.05
+n <- 15
+m <- 100
+epsilon <- c(seq(0, 0.15, 0.01), seq(0.15, 1, 0.05))
+N <- length(epsilon)
+pwr <- numeric(N)
+```
+
+```{r}
+d = 2 
+# two multivariate normal components 
+sigma1 = diag(rep(1, d))
+sigma2 = diag(rep(10, d))
+for (j in 1:N) { 
+  e <- epsilon[j]
+  sktests <- numeric(m)
+  for (i in 1:m) {
+    n1 = rbinom(1, n, 1-e)
+    n2 = n - n1
+    if(n2==0){
+      x = mvrnorm(n1,rep(0,d),sigma1)
+    } else if(n1==0){
+      x = mvrnorm(n2,rep(0,d),sigma2)
+    } else{
+      x1 <- mvrnorm(n1,rep(0,d),sigma1)
+      x2 <- mvrnorm(n2,rep(0,d),sigma2)
+      x = rbind(x1,x2)
+    }
+    b = sk(x)
+    sktests[i] <- as.integer(b > cv.upper || b<cv.lower)
+    }
+  pwr[j] <- mean(sktests)
+}
+#plot power vs epsilon
+plot(epsilon, pwr, type = "b", xlab = bquote(epsilon), ylim = c(0,1))
+abline(h = .1, lty = 3)
+se <- sqrt(pwr * (1-pwr) / m) #add standard errors
+lines(epsilon, pwr+se, lty = 3)
+lines(epsilon, pwr-se, lty = 3)
+
+```
+
+## HW of 2021—10-28
+
+### 7.7
+
+
+```{r}
+set.seed(114514)
+library(boot)
+library(bootstrap)
+```
+
+```{r}
+data(scor, package="bootstrap")
+n <- nrow(scor)
+cov.hat <- cov(scor) * (n-1) / n
+eigen.hat <- eigen(cov.hat)$values
+theta.hat <- eigen.hat[1] / sum(eigen.hat)
+#bootstrap estimate of bias
+B <- 2000 #larger for estimating bias
+n <- nrow(scor)
+theta.b <- numeric(B)
+for (b in 1:B) {
+i <- sample(1:n, size = n, replace = TRUE)
+SCOR <- scor[i,]
+cov.b <- cov(SCOR) * (n-1) / n
+eigen.b <- eigen(cov.b)$values
+theta.b[b] <- eigen.b[1] / sum(eigen.b)
+}
+# estimate the bias
+bias <- mean(theta.b - theta.hat)
+bias
+# estimate the std error 
+se <- sd(theta.b)
+se
+```
+
+
+
+### 7.8 and 7.9
+
+Jackknife method
+```{r}
+#compute the jackknife replicates, leave-one-out estimates
+theta.jk <- numeric(n)
+for (i in 1:n){
+SCOR.jk <- scor[-i,]
+cov.jk <- cov(SCOR.jk) * (n-1) / n
+eigen.jk <- eigen(cov.jk)$values
+theta.jk[i] <- eigen.jk[1] / sum(eigen.jk)
+}
+bias.jk <- (n-1) * (mean(theta.jk) - theta.hat)
+bias.jk
+se.jk <- sqrt((n-1) *
+mean((theta.jk - mean(theta.jk))^2))
+se.jk
+```
+
+95% precentile:
+```{r}
+quan1 = quantile(theta.b,0.975)
+quan2 = quantile(theta.b,0.025)
+quan1
+quan2
+
+```
+
+BCa Confidence interval:
+
+
+```{r}
+boot.BCa <-
+function(x, th0, th, stat, conf = .95) {
+# bootstrap with BCa bootstrap confidence interval
+# th0 is the observed statistic
+# th is the vector of bootstrap replicates
+# stat is the function to compute the statistic
+x <- as.matrix(x)
+n <- nrow(x) #observations in rows
+N <- 1:n
+alpha <- (1 + c(-conf, conf))/2
+zalpha <- qnorm(alpha)
+# the bias correction factor
+z0 <- qnorm(sum(th < th0) / length(th))
+# the acceleration factor (jackknife est.)
+th.jack <- numeric(n)
+for (i in 1:n) {
+J <- N[1:(n-1)]
+th.jack[i] <- stat(x[-i, ], J)
+}
+L <- mean(th.jack) - th.jack
+a <- sum(L^3)/(6 * sum(L^2)^1.5)
+# BCa conf. limits
+adj.alpha <- pnorm(z0 + (z0+zalpha)/(1-a*(z0+zalpha)))
+limits <- quantile(th, adj.alpha, type=6)
+return(list("est"=th0, "BCa"=limits))
+}
+
+
+```
+
+
+```{r}
+stat <- function(dat, ind) {
+#function to compute the statistic
+n <- nrow(dat)
+temp <- dat[ind, ]
+cov.hat <- cov(temp) * (n-1) / n
+eigen <- eigen(cov.hat)$values
+theta <- eigen[1] / sum(eigen)
+theta
+}
+
+boot.BCa(scor, th0 = theta.hat, th = theta.b, stat = stat)
+```
+
+
+
+### 7.B
+
+```{r}
+stat.skewness <- function(dat, ind) {
+#function to compute the statistic
+temp <- dat[ind]
+dat.bar <- mean(temp)
+tmp3 <- mean((temp-dat.bar)^3)
+tmp2 <- mean((temp-dat.bar)^2)
+tmp3/tmp2^(3/2)
+}
+```
+
+We first consider normal distribution:
+
+```{r}
+n <- 20
+# lower the coeff
+m <- 100
+basic_res <- numeric(m)
+norm_res <- numeric(m)
+perc_res <- numeric(m)
+for (i in 1:m){
+data_normal <- rnorm(n)
+boot.obj <- boot(data_normal, statistic = stat.skewness, R = 1000)
+ci <- boot.ci(boot.obj,type = c("basic", "norm", "perc"))
+#basic
+basic_res[i] <- (ci$basic[4]>0 | ci$basic[5]<0)
+norm_res[i] <- (ci$normal[2]>0 | ci$normal[3]<0)
+perc_res[i] <- (ci$percent[4]>0 | ci$percent[5]<0)
+}
+```
+```{r}
+1-mean(basic_res)
+1-mean(norm_res)
+1-mean(perc_res)
+```
+
+similarly chisq distribution:
+
+```{r}
+theta.chisq <- sqrt(8/5)
+basic_res <- numeric(m)
+norm_res <- numeric(m)
+perc_res <- numeric(m)
+for (i in 1:m){
+data_chisq <- rchisq(n, df=5)
+boot.obj <- boot(data_chisq, statistic = stat.skewness, R = 1000)
+ci <- boot.ci(boot.obj,type = c("basic", "norm", "perc"))
+#basic
+basic_res[i] <- (ci$basic[4]>theta.chisq | ci$basic[5]<theta.chisq)
+norm_res[i] <- (ci$normal[2]>theta.chisq | ci$normal[3]<theta.chisq)
+perc_res[i] <- (ci$percent[4]>theta.chisq | ci$percent[5]<theta.chisq)
+}
+```
+```{r}
+1-mean(basic_res)
+1-mean(norm_res)
+1-mean(perc_res)
+```
+
+## HW of 2021—11-04
+
+### 8.2
+
+```{r}
+set.seed(114514)
+n <- 10
+x <- rnorm(n)
+y <- rchisq(n, df=1)
+R <- 999 #number of replicates
+z <- c(x, y) #pooled sample
+K <- 1:(2*n)
+reps <- numeric(R) #storage for replicates
+t0 <- cor.test(x, y)$statistic
+for (i in 1:R) {
+#generate indices k for the first sample
+k <- sample(K, size = n, replace = FALSE)
+x1 <- z[k]
+y1 <- z[-k] #complement of x1
+reps[i] <- cor.test(x1, y1)$statistic
+}
+p.permutation <-  mean(c(t0, reps) >= t0)
+p.permutation
+a <- cor.test(x, y)
+a$p.value
+```
+
+### Question 2
+
+We first define some functions:
+
+```{r}
+library(RANN)
+Tn <- function(z, ix, sizes,k) {
+  n1 <- sizes[1]; n2 <- sizes[2]; n <- n1 + n2
+  if(is.vector(z)) z <- data.frame(z,0);
+  z <- z[ix, ];
+  NN <- nn2(data=z, k=k+1) # what's the first column?
+  block1 <- NN$nn.idx[1:n1,-1] 
+  block2 <- NN$nn.idx[(n1+1):n,-1] 
+  i1 <- sum(block1 < n1 + .5); i2 <- sum(block2 > n1+.5) 
+  (i1 + i2) / (k * n)
+}
+library(Ball)
+library(energy)
+library(boot)
+```
+
+(1)
+
+```{r}
+# diff var same mean
+n <- 12
+x <- rnorm(n, sd=1)
+y <- rnorm(n, sd=4)
+z <- c(x, y)
+N <- c(n, n)
+boot.obj <- boot(data = z, statistic = Tn, R = 9999,
+    sim = "permutation", sizes = N, k=3)
+ts <- c(boot.obj$t0,boot.obj$t)
+p.value <- mean(ts>=ts[1])
+# p value of nn
+p.value
+# ------------------------------------------
+boot.obs <- eqdist.etest(z, sizes=N, R=9999)
+p.value <- boot.obs$p.value
+# p value of energy
+p.value
+# ------------------------------------------
+p.value <- bd.test(x = x, y = y, num.permutations=9999)
+# p value of ball
+p.value$p.value
+```
+
+
+(2)
+
+```{r}
+# diff mean same var
+n <- 12
+x <- rnorm(n, mean=1)
+y <- rnorm(n, mean=100)
+z <- c(x, y)
+N <- c(n, n)
+boot.obj <- boot(data = z, statistic = Tn, R = 9999,
+    sim = "permutation", sizes = N, k=3)
+ts <- c(boot.obj$t0,boot.obj$t)
+p.value <- mean(ts>=ts[1])
+# p value of nn
+p.value
+# ------------------------------------------
+boot.obs <- eqdist.etest(z, sizes=N, R=9999)
+p.value <- boot.obs$p.value
+# p value of energy
+p.value
+# ------------------------------------------
+p.value <- bd.test(x = x, y = y, num.permutations=9999)
+# p value of ball
+p.value$p.value
+```
+
+
+(3)
+
+```{r}
+# t & binormal
+n <- 12
+x <- rt(n, df=1)
+y <- numeric(n)
+bi <- rbinom(n, 1, 0.5)
+for (i in 1:n){
+  if (bi[i] == 1){
+    y[i] <- rnorm(1)
+  }else{
+    y[i] <- rnorm(1, mean=1, sd=4)
+  }
+} 
+z <- c(x, y)
+N <- c(n, n)
+boot.obj <- boot(data = z, statistic = Tn, R = 9999,
+    sim = "permutation", sizes = N, k=3)
+ts <- c(boot.obj$t0,boot.obj$t)
+p.value <- mean(ts>=ts[1])
+# p value of nn
+p.value
+# ------------------------------------------
+boot.obs <- eqdist.etest(z, sizes=N, R=9999)
+p.value <- boot.obs$p.value
+# p value of energy
+p.value
+# ------------------------------------------
+p.value <- bd.test(x = x, y = y, num.permutations=9999)
+# p value of ball
+p.value$p.value
+```
+
+
+(4)
+
+```{r}
+# unbalanced
+n1 <- 1
+n2 <- 10
+x <- rnorm(n1)
+y <- rnorm(n2)
+z <- c(x, y)
+N <- c(n1, n2)
+boot.obj <- boot(data = z, statistic = Tn, R = 9999,
+    sim = "permutation", sizes = N, k=3)
+ts <- c(boot.obj$t0,boot.obj$t)
+p.value <- mean(ts>=ts[1])
+# p value of nn
+p.value
+# ------------------------------------------
+boot.obs <- eqdist.etest(z, sizes=N, R=9999)
+p.value <- boot.obs$p.value
+# p value of energy
+p.value
+# ------------------------------------------
+p.value <- bd.test(x = x, y = y, num.permutations=9999)
+# p value of ball
+p.value$p.value
+```
+
+## HW of 2021—11-11
+
+### 8.2
+
+
+```{r}
+set.seed(12345)
+
+m <- 10000
+theta <- 1
+b <- 0
+sigma <- 10
+x <- numeric(m)
+# independent
+x[1] <- rnorm(1, sd=sigma)
+k <- 0
+u <- runif(m)
+
+for (i in 2:m) {
+    xt <- x[i-1]
+    y <- rnorm(1, sd=sigma)
+    num <- dcauchy(y) * dnorm(xt, sd=sigma)
+    den <- dcauchy(xt) * dnorm(y, sd=sigma)
+    if (u[i] <= num/den){
+      x[i] <- y
+    } else {
+      x[i] <- xt
+      k <- k+1     #y is rejected
+    }
+}
+k
+
+b <- 1001      #discard the burn-in sample
+y <- x[b:m]
+a <- ppoints(10)
+QR <- qcauchy(a)  #quantiles of Rayleigh
+Q <- quantile(x, a)
+# true quantiles
+QR
+# simulated quantiles
+Q
+```
+
+### Question 2
+
+
+```{r}
+#initialize constants and parameters
+N <- 5000 #length of chain
+burn <- 1000 #burn-in length
+X <- matrix(0, N, 2) #the chain, a bivariate sample
+mu1 <- 2
+mu2 <- 0.5
+a <- 1
+b <- 2
+n <- 10
+###### generate the chain #####
+
+X[1, ] <- c(mu1, mu2) #initialize
+for (i in 2:N) {
+x2 <- X[i-1, 2]
+X[i, 1] <- rbinom(1, n, x2)
+x1 <- X[i, 1]
+X[i, 2] <- rbeta(1, x1+a, n-x1+b)
+}
+b <- burn + 1
+index <- b: 2000
+x <- X[index, ]
+plot(index, X[index, 1], type="l", main="", ylab="x")
+plot(index, X[index, 2], type="l", main="", ylab="x")
+
+```
+
+### Question 3
+
+
+```{r}
+# 9.3
+Gelman.Rubin <- function(psi) {
+        # psi[i,j] is the statistic psi(X[i,1:j])
+        # for chain in i-th row of X
+        psi <- as.matrix(psi)
+        n <- ncol(psi)
+        k <- nrow(psi)
+
+        psi.means <- rowMeans(psi)     #row means
+        B <- n * var(psi.means)        #between variance est.
+        psi.w <- apply(psi, 1, "var")  #within variances
+        W <- mean(psi.w)               #within est.
+        v.hat <- W*(n-1)/n + (B/n)     #upper variance est.
+        r.hat <- v.hat / W             #G-R statistic
+        return(r.hat)
+        }
+
+    normal.chain <- function(sigma, N, X1) {
+        #generates a Metropolis chain for Normal(0,1)
+        #with Normal(X[t], sigma) proposal distribution
+        #and starting value X1
+        x <- rep(0, N)
+        x[1] <- X1
+        u <- runif(N)
+
+        for (i in 2:N) {
+            xt <- x[i-1]
+            y <- rnorm(1, sd=sigma)
+            num <- dcauchy(y) * dnorm(xt, sd=sigma)
+            den <- dcauchy(xt) * dnorm(y, sd=sigma)
+            r <- num / den
+            if (u[i] <= r) x[i] <- y else
+                 x[i] <- xt
+            }
+        return(x)
+        }
+
+    sigma <- 10     #parameter of proposal distribution
+    k <- 4          #number of chains to generate
+    n <- 1500      #length of chains
+    b <- 100       #burn-in length
+
+    #choose overdispersed initial values
+    x0 <- c(-10, -5, 5, 10)
+
+    #generate the chains
+    set.seed(12345)
+    X <- matrix(0, nrow=k, ncol=n)
+    for (i in 1:k)
+        X[i, ] <- normal.chain(sigma, n, x0[i])
+
+    #compute diagnostic statistics
+    psi <- t(apply(X, 1, cumsum))
+    for (i in 1:nrow(psi))
+        psi[i,] <- psi[i,] / (1:ncol(psi))
+
+    #plot the sequence of R-hat statistics
+    rhat <- rep(0, n)
+    for (j in (b+1):n)
+        rhat[j] <- Gelman.Rubin(psi[,1:j])
+    plot(rhat[(b+1):n], type="l", xlab="", ylab="R")
+    abline(h=1.1, lty=2)
+
+```
+
+
+```{r}
+# 9.8(x)
+Gelman.Rubin <- function(psi) {
+        # psi[i,j] is the statistic psi(X[i,1:j])
+        # for chain in i-th row of X
+        psi <- as.matrix(psi)
+        n <- ncol(psi)
+        k <- nrow(psi)
+
+        psi.means <- rowMeans(psi)     #row means
+        B <- n * var(psi.means)        #between variance est.
+        psi.w <- apply(psi, 1, "var")  #within variances
+        W <- mean(psi.w)               #within est.
+        v.hat <- W*(n-1)/n + (B/n)     #upper variance est.
+        r.hat <- v.hat / W             #G-R statistic
+        return(r.hat)
+        }
+
+    normal.chain <- function(sigma, N, X1) {
+        #generates a Metropolis chain for Normal(0,1)
+        #with Normal(X[t], sigma) proposal distribution
+        #and starting value X1
+        N <- 500 #length of chain
+        burn <- 100 #burn-in length
+        X <- matrix(0, N, 2) #the chain, a bivariate sample
+        mu1 <- 2
+        mu2 <- 0.5
+        a <- 2
+        b <- 2
+        n <- 10
+
+        X[1, ] <- c(X1, mu2) #initialize
+            for (i in 2:N) {
+            x2 <- X[i-1, 2]
+            X[i, 1] <- rbinom(1, n, x2)
+            x1 <- X[i, 1]
+            X[i, 2] <- rbeta(1, x1+a, n-x1+b)
+            }
+        x <- X[, 1]
+        return(x)
+        }
+
+    sigma <- 10     #parameter of proposal distribution
+    k <- 4          #number of chains to generate
+    n <- 1500      #length of chains
+    b <- 100       #burn-in length
+
+    #choose overdispersed initial values
+    x0 <- c(-10, -5, 5, 10)
+
+    #generate the chains
+    set.seed(12345)
+    X <- matrix(0, nrow=k, ncol=n)
+    for (i in 1:k)
+        X[i, ] <- normal.chain(sigma, n, x0[i])
+
+    #compute diagnostic statistics
+    psi <- t(apply(X, 1, cumsum))
+    for (i in 1:nrow(psi))
+        psi[i,] <- psi[i,] / (1:ncol(psi))
+
+    #plot the sequence of R-hat statistics
+    rhat <- rep(0, n)
+    for (j in (b+1):n)
+        rhat[j] <- Gelman.Rubin(psi[,1:j])
+    plot(rhat[(b+1):n], type="l", xlab="", ylab="R")
+    abline(h=1.1, lty=2)
+
+```
+
+
+```{r}
+# 9.8(y)
+Gelman.Rubin <- function(psi) {
+        # psi[i,j] is the statistic psi(X[i,1:j])
+        # for chain in i-th row of X
+        psi <- as.matrix(psi)
+        n <- ncol(psi)
+        k <- nrow(psi)
+
+        psi.means <- rowMeans(psi)     #row means
+        B <- n * var(psi.means)        #between variance est.
+        psi.w <- apply(psi, 1, "var")  #within variances
+        W <- mean(psi.w)               #within est.
+        v.hat <- W*(n-1)/n + (B/n)     #upper variance est.
+        r.hat <- v.hat / W             #G-R statistic
+        return(r.hat)
+        }
+
+    normal.chain <- function(sigma, N, X1) {
+        #generates a Metropolis chain for Normal(0,1)
+        #with Normal(X[t], sigma) proposal distribution
+        #and starting value X1
+        N <- 500 #length of chain
+        burn <- 100 #burn-in length
+        X <- matrix(0, N, 2) #the chain, a bivariate sample
+        mu1 <- 2
+        mu2 <- 0.5
+        a <- 2
+        b <- 2
+        n <- 10
+
+        X[1, ] <- c(mu1, X1) #initialize
+            for (i in 2:N) {
+            x2 <- X[i-1, 2]
+            X[i, 1] <- rbinom(1, n, x2)
+            x1 <- X[i, 1]
+            X[i, 2] <- rbeta(1, x1+a, n-x1+b)
+            }
+        x <- X[, 2]
+        return(x)
+        }
+
+    sigma <- 10     #parameter of proposal distribution
+    k <- 4          #number of chains to generate
+    n <- 1500      #length of chains
+    b <- 100       #burn-in length
+
+    #choose overdispersed initial values
+    x0 <- c(0.1, 0.4, 0.7, 0.9)
+
+    #generate the chains
+    set.seed(12345)
+    X <- matrix(0, nrow=k, ncol=n)
+    for (i in 1:k)
+        X[i, ] <- normal.chain(sigma, n, x0[i])
+
+    #compute diagnostic statistics
+    psi <- t(apply(X, 1, cumsum))
+    for (i in 1:nrow(psi))
+        psi[i,] <- psi[i,] / (1:ncol(psi))
+
+    #plot the sequence of R-hat statistics
+    rhat <- rep(0, n)
+    for (j in (b+1):n)
+        rhat[j] <- Gelman.Rubin(psi[,1:j])
+    plot(rhat[(b+1):n], type="l", xlab="", ylab="R")
+    abline(h=1.1, lty=2)
+
+```
+
+## HW of 2021—11-18
+
+### 8.2
+
+```{r}
+a <- c(1, 2)
+fk <- function(a, k){
+  d <- length(a)
+  lognorm.a <- log(sqrt(sum(a^2)))
+  log.kfac <- log(factorial(k))
+  log.res <- (2*k+2)*lognorm.a+lgamma((d+1)/2)+lgamma(k+3/2)-k*log(2)-log.kfac-log(2*k+1)-log(2*k+2)-lgamma(k+d/2+1)
+  return (exp(log.res)*(-1)^k)
+}
+fk(a, 10)
+sum.res <- 0
+for (i in 0:1000){
+  sum.res <- sum.res + fk(a, i)
+}
+sum.res
+```
+
+### Question 2
+
+We first finish 11.4:
+```{r}
+sa <- function(a, k){
+  return(1 - pt(sqrt((a^2*k)/(k+1-a^2)),df=k))
+}
+obj <- function(a, k){
+  return(sa(a, k-1)-sa(a, k))
+}
+
+K <- c(4:25,100,500,1000)
+n <- length(K)
+res <- numeric(n)
+
+for(i in 1:n){
+  res[i] <- uniroot(obj, k=K[i], lower=0.01, upper=sqrt(K[i])-0.01)$root
+}
+plot(res, type = "o")
+```
+
+We then finish 11.5 part:
+```{r}
+f <- function(u, k) {
+(1+u^2/k)^(-(k+1)/2)
+}
+sa.int <- function(a, k){
+  ck <- sqrt((a^2*k)/(k+1-a^2))
+  int.res <- integrate(f, lower=0, upper=ck,
+rel.tol=.Machine$double.eps^0.25,
+k=k)
+  return(exp(log(2)+lgamma((k+1)/2)-log(sqrt(pi*k))-lgamma(k/2))*int.res$value)
+}
+obj.int <- function(a, k){
+  return(sa.int(a, k-1)-sa.int(a, k))
+}
+
+K <- c(4:25,100,500,1000)
+n <- length(K)
+res <- numeric(n)
+
+for(i in 1:n){
+  res[i] <- uniroot(obj.int, k=K[i], lower=0.01, upper=2)$root
+}
+plot(res, type = "o")
+
+```
+
+
+
+### Question 3
+
+
+We first execute the theoretical part:
+$$
+\begin{align}
+E[l(\mathbf{x})|\mathbf{y}, \lambda] &= n\log(\lambda) - \lambda\sum_{i=1}^nE[x_i|y_i, \lambda]\\
+&=n\log(\lambda) - \sum_{i=1}^n\bigg[y_i\text{1}\{y_i<\tau\}+(\tau+\frac{1}{\lambda})\text{1}\{y_i=\tau\}\bigg]\\
+\end{align}
+$$
+We get the result that $\lambda^{(k+1)} = \frac{n}{\frac{m}{\lambda^{(k)}} +\sum_{i=1}^{n}y_i}$, where $m=\sum_{i=1}^{n}\text{1}\{y_i=1\}$.
+```{r}
+data <- c(0.54, 0.48, 0.33, 0.43, 1.00, 1.00, 0.91, 1.00, 0.21, 0.85)
+n <- length(data)
+m = sum(data==1)
+lambda <- 1
+for (k in 1:100)
+  lambda <- n/(m/lambda+sum(data))
+lambda
+```
+
+The likelihood function of mixed model could be written as:
+$$
+\begin{align}
+L(\lambda, \mathbf{y}) &= \prod_{i=1}^{n}[\lambda e^{-\lambda y_i}\text{1}\{y_i < 1\} +e^{-\lambda y_i}\text{1}\{y_i = 1\}]\\
+&=\lambda e^{-\lambda(\sum_{i=1}^ny_i-m\tau)}+e^{-m\tau\lambda}
+\end{align}
+$$
+```{r}
+f <- function(lambda, data, t){
+  n <- length(data)
+  m <- sum(data==t)
+  return (lambda*exp(-lambda*(sum(data)-m*t))+exp(-m*t*lambda))
+}
+optimize(f,lower=0.2, upper=1.3, maximum = T, data=data,  t=1)
+```
+
+## HW of 2021—11-25
+
+### 1
+
+
+In the second line of code, x = x passes the argument to function mean.
+
+### Question 2
+
+We first finish #3:
+```{r}
+formulas <- list(
+mpg ~ disp,
+mpg ~ I(1 / disp),
+mpg ~ disp + wt,
+mpg ~ I(1 / disp) + wt
+)
+
+rsquared <- function(mod) summary(mod)$r.square
+mtcars_lm <- function(j) { # x denotes the variables of reg
+  rsquared(lm(j, data=mtcars))
+}
+lapply(formulas, mtcars_lm)
+```
+
+We then finish #4:
+```{r}
+bootstraps <- lapply(1:10, function(i) {
+rows <- sample(1:nrow(mtcars), rep = TRUE)
+mtcars[rows, ]
+})
+
+mtcars_lm2 <- function(x) { # x denotes the variables of reg
+  rsquared(lm(mpg ~ disp, data=x))
+}
+lapply(bootstraps, mtcars_lm2)
+```
+
+
+
+### Question 3
+
+
+```{r}
+mixed_data <- mtcars
+mixed_data['s'] <- 's'
+mixed_data['t'] <- 't'
+
+vapply(mtcars, function(x) sqrt(var(x)), -1)
+flag <- vapply(mixed_data, is.numeric, logical(1))
+vapply(mixed_data[flag], function(x) sqrt(var(x)), -1)
+```
+
+
+### Question 4
+
+
+We only write mcsapply, mcvapply is similiar.
+```{r}
+#library(parallel)
+#clnum <- detectCores() 
+#cl <- makeCluster(getOption("cl.cores", clnum))
+#mcsapply = function(cluster,X,FUN,...){
+# res=parLapply(cluster,X,FUN,...) #Use parLapply in Windows
+# simplify2array(res)
+#}
+#system.time(sapply(1:10000000, sqrt))
+#用户  系统  流逝 
+#11.30  0.16 11.44 
+
+#system.time(mcsapply(cl, 1:10000000, sqrt))
+#用户 系统 流逝 
+#5.07 0.58 7.43 
+
+```
+
+
+## HW of 2021-12-02
+
+### 1
+
+
+```{r}
+library(Rcpp)
+library(microbenchmark)
+cppFunction("
+NumericMatrix cppbivariate(int N) {
+  NumericMatrix X(N,2);
+  int a = 2;
+  int b = 3;
+  int n = 10;
+  double mu1 = 2;
+  double mu2 = 0.5;
+  X(0,0) = mu1;
+  X(0,1) = mu2;
+  for (int i = 1; i < N; i++) {
+    X(i,0) = R::rbinom(n,X(i-1,1));
+    X(i,1) = R::rbeta(X(i-1,0)+a, n-X(i-1,0)+b);
+  }
+  return(X);
+}")
+
+set.seed(12345)
+
+rbivariate <- function(n){
+  N <- n #length of chain
+  burn <- 1000 #burn-in length
+  X <- matrix(0, N, 2) #the chain, a bivariate sample
+  mu1 <- 2
+  mu2 <- 0.5
+  a <- 1
+  b <- 2
+  n <- 10
+  ###### generate the chain #####
+  X[1, ] <- c(mu1, mu2) #initialize
+  for (i in 2:N) {
+    x2 <- X[i-1, 2]
+    X[i, 1] <- rbinom(1, n, x2)
+    x1 <- X[i, 1]
+    X[i, 2] <- rbeta(1, x1+a, n-x1+b)
+  }
+  b <- burn + 1
+  index <- b: n
+  x <- X[index, ]
+  return(x)
+}
+```
+
+```{r}
+N <- 5000
+burn <- 1000
+X.r <- rbivariate(N)
+X.cpp <- cppbivariate(N)
+qqplot(X.r[, 1],X.cpp[burn:N, 1],main="qqplot of X1")
+qqplot(X.r[, 2],X.cpp[burn:N, 2],main="qqplot of X2")
+ts = microbenchmark(gibsR=rbivariate(N), gibsC=cppbivariate(N))
+summary(ts)
+```
